@@ -245,7 +245,7 @@ proxy-groups:
     url: https://www.gstatic.com/generate_204
     interval: 300
     # 逻辑：强力正则，只选美/日/新/台/英，且排除甲骨文及廉价机房
-    filter: "(?i)^(?=.*(us|美|jp|日|kr|韩|sg|新|tw|台|uk|英))(?!.*(oracle|甲骨文|jgw|jparm|cc1|cc2|vultr|racknerd|cloudcone|rn|bwg))"
+    filter: "(?i)^(?=.*(us|美|jp|日|kr|韩|sg|新|tw|台|uk|英))(?!.*(oracle|甲骨文|jgw|jparm|cc1|cc2))"
     include-all: true
 
   # 2. 下载专用 (s801/wx)
