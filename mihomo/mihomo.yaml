@@ -1,6 +1,7 @@
-# === Mihomo (Clash Meta) 最终布局版 ===
-# 布局：核心 -> 应用 -> 地区/特殊
-# 特性：甲骨文归位 | AI防污染 | 游戏全平台 | 调试模式
+# === Mihomo (Clash Meta) 终极配置文件 ===
+# 适用内核: Mihomo (Clash Meta)
+# 布局逻辑: 核心设置 -> 规则集 -> 策略组 -> 匹配规则
+# 包含特性: .mrs 二进制规则支持 | 甲骨文分流 | AI 防污染正则
 
 # --- 1. 基础设置 ---
 port: 7890
@@ -15,6 +16,7 @@ keep-alive-interval: 15
 unified-delay: true
 tcp-concurrent: true
 
+# 流量嗅探
 sniffer:
   enable: true
   force-dns-mapping: true
@@ -26,6 +28,7 @@ sniffer:
     HTTP:
       ports: [80, 8080-8880]
 
+# DNS 设置
 dns:
   enable: true
   listen: :1053
@@ -39,16 +42,17 @@ dns:
   fallback:
     - https://dns.google/dns-query
     - https://1.1.1.1/dns-query
-    - tls://8.8.4.4
-    - tls://1.1.1.1
   fallback-filter:
     geoip: true
     geoip-code: CN
     ipcidr: [240.0.0.0/4]
 
-# --- 2. 分流规则集 (Rule Providers) ---
+# --- 2. 节点占位 (转换器会自动填充此部分) ---
+proxies: []
+proxy-providers: {}
+
+# --- 3. 分流规则集 (Rule Providers) ---
 rule-providers:
-  # 广告
   ads:
     type: http
     behavior: domain
@@ -57,7 +61,6 @@ rule-providers:
     path: ./ruleset/ads.mrs
     interval: 86400
 
-  # AI 全集
   ai:
     type: http
     behavior: domain
@@ -66,7 +69,6 @@ rule-providers:
     path: ./ruleset/ai.mrs
     interval: 86400
 
-  # 游戏全平台
   games:
     type: http
     behavior: domain
@@ -75,7 +77,6 @@ rule-providers:
     path: ./ruleset/games.mrs
     interval: 86400
 
-  # 国外云盘合集
   netdisk:
     type: http
     behavior: domain
@@ -92,7 +93,6 @@ rule-providers:
     path: ./ruleset/pikpak.mrs
     interval: 86400
 
-  # 基础服务
   google:
     type: http
     behavior: domain
@@ -133,7 +133,6 @@ rule-providers:
     path: ./ruleset/apple.mrs
     interval: 86400
 
-  # 地区规则
   japan_all:
     type: http
     behavior: domain
@@ -174,13 +173,11 @@ rule-providers:
     path: ./ruleset/cn_ip.mrs
     interval: 86400
 
-# --- 3. 策略组 (Proxy Groups) ---
+# --- 4. 策略组 (Proxy Groups) ---
 proxy-groups:
-  
-  # === 第一梯队：核心/模式 ===
+  # 核心切换
   - name: 🚀 节点选择
     type: select
-    # 包含了下面所有的特殊组和地区组
     proxies: [♻️ 自动选择, 🚀 手动切换, ⚡️ AI纯净优选, 📥 下载专用, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇰🇷 韩国节点, 🇺🇲 美国节点, DIRECT]
   
   - name: ♻️ 自动选择
@@ -194,10 +191,9 @@ proxy-groups:
     type: select
     include-all: true
 
-  # === 第二梯队：功能应用 ===
+  # 应用分流
   - name: 💬 Ai平台
     type: select
-    # 优先使用纯净组，其次下载组(大带宽备用)，再是地区
     proxies: [⚡️ AI纯净优选, 📥 下载专用, 🇺🇲 美国节点, 🇯🇵 日本节点, 🇰🇷 韩国节点, 🚀 手动切换]
 
   - name: ☁️ 国外云盘
@@ -211,22 +207,10 @@ proxy-groups:
   - name: 📹 油管视频
     type: select
     proxies: [🚀 节点选择, ♻️ 自动选择, 📥 下载专用, ⚡️ AI纯净优选, 🇺🇲 美国节点, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇰🇷 韩国节点]
-
-  - name: 🎬 日韩地区
-    type: select
-    proxies: [🚀 节点选择, ♻️ 自动选择, 📥 下载专用, 🇯🇵 日本节点, 🇰🇷 韩国节点, 🇭🇰 香港节点, DIRECT]
   
   - name: 📲 电报信息
     type: select
     proxies: [🚀 节点选择, ♻️ 自动选择, 📥 下载专用, ⚡️ AI纯净优选, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇰🇷 韩国节点, 🇺🇲 美国节点]
-
-  - name: Ⓜ️ 微软服务
-    type: select
-    proxies: [DIRECT, 📥 下载专用, 🚀 节点选择, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点]
-
-  - name: 🍎 苹果服务
-    type: select
-    proxies: [DIRECT, 📥 下载专用, 🚀 节点选择, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点]
 
   - name: 🌍 国外媒体
     type: select
@@ -234,27 +218,22 @@ proxy-groups:
 
   - name: 🛑 全球拦截
     type: select
-    # 调试模式：方便误杀时切换
     proxies: [REJECT, DIRECT, 🚀 节点选择]
 
-  # === 第三梯队：地区节点/特殊 ===
-  
-  # 1. AI 纯净优选 (防污染核心)
+  # 地区与特殊组 (正则核心)
   - name: ⚡️ AI纯净优选
     type: url-test
     url: https://www.gstatic.com/generate_204
     interval: 300
-    # 逻辑：强力正则，只选美/日/新/台/英，且排除甲骨文及廉价机房
+    # 已更新正则：选取常用地区，同时排除甲骨文与廉价机房
     filter: "(?i)^(?=.*(us|美|jp|日|kr|韩|sg|新|tw|台|uk|英))(?!.*(oracle|甲骨文|jgw|jparm|cc1|cc2))"
     include-all: true
 
-  # 2. 下载专用 (s801/wx)
   - name: 📥 下载专用
     type: select
     filter: "(?i)(s801|wx)"
     include-all: true
 
-  # 3. 地区节点 (甲骨文已包含在内)
   - name: 🇭🇰 香港节点
     type: url-test
     url: https://www.gstatic.com/generate_204
@@ -266,7 +245,6 @@ proxy-groups:
     type: url-test
     url: https://www.gstatic.com/generate_204
     interval: 300
-    # 包含所有 日本/JP 节点 (含甲骨文)
     filter: "(?i)(jp|日本)"
     include-all: true
 
@@ -274,7 +252,6 @@ proxy-groups:
     type: url-test
     url: https://www.gstatic.com/generate_204
     interval: 300
-    # 包含所有 韩国/KR 节点 (含甲骨文)
     filter: "(?i)(kr|韩)"
     include-all: true
 
@@ -282,48 +259,37 @@ proxy-groups:
     type: url-test
     url: https://www.gstatic.com/generate_204
     interval: 300
-    # 包含所有 美国/US 节点
     filter: "(?i)(us|美)"
     include-all: true
 
-  # === 兜底辅助 (Hidden) ===
   - name: 🐟 漏网之鱼
     type: select
     proxies: [🚀 节点选择, ♻️ 自动选择, 📥 下载专用, ⚡️ AI纯净优选, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇰🇷 韩国节点, 🇺🇲 美国节点, DIRECT]
 
-  - name: 🎯 全球直连
-    type: select
-    proxies: [DIRECT]
-
-# --- 4. 规则匹配 (Rules) ---
+# --- 5. 规则匹配 (Rules) ---
 rules:
   - RULE-SET,ads,🛑 全球拦截
 
-  # === 优先级 1: 微软/苹果 (避免进入云盘组) ===
-  - RULE-SET,microsoft,Ⓜ️ 微软服务
-  - RULE-SET,apple,🍎 苹果服务
-
-  # === 优先级 2: 功能应用 ===
+  # 优先级高：特定服务
+  - RULE-SET,microsoft,DIRECT
+  - RULE-SET,apple,DIRECT
   - RULE-SET,ai,💬 Ai平台
   - RULE-SET,pikpak,☁️ 国外云盘
   - RULE-SET,netdisk,☁️ 国外云盘
   - RULE-SET,games,🎮 游戏平台
   - RULE-SET,youtube,📹 油管视频
   - RULE-SET,telegram,📲 电报信息
-
-  # === 优先级 3: 地区/大厂 ===
   - RULE-SET,google,🚀 节点选择
-  # 日韩全量域名 -> 强制走日韩应用组
-  - RULE-SET,japan_all,🎬 日韩地区
-  - RULE-SET,korea_all,🎬 日韩地区
-
-  # === 优先级 4: 兜底逻辑 ===
+  
+  # 地区域名匹配
+  - RULE-SET,japan_all,🇯🇵 日本节点
+  - RULE-SET,korea_all,🇰🇷 韩国节点
   - RULE-SET,proxy_all,🌍 国外媒体
   
-  # 国内直连
-  - GEOSITE,private,🎯 全球直连
-  - GEOIP,private,🎯 全球直连
-  - RULE-SET,cn,🎯 全球直连
-  - RULE-SET,cn_ip,🎯 全球直连
+  # 基础直连
+  - GEOSITE,private,DIRECT
+  - GEOIP,private,DIRECT
+  - RULE-SET,cn,DIRECT
+  - RULE-SET,cn_ip,DIRECT
 
   - MATCH,🐟 漏网之鱼
