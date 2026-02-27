@@ -126,6 +126,7 @@ proxy-groups:
     type: select
     include-all: true
     filter: '.*'
+```
 
 
 ###第二步：配置 Custom Rules (自定义规则)
@@ -187,6 +188,7 @@ proxy-groups:
     "ip": "cn"
   }
 ]
+```
 
 
 ###第三步：网页端防覆盖生成技巧
