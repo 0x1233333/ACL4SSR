@@ -1,24 +1,18 @@
-我帮你把 Sublink Worker 的底层源代码“解剖”了一遍，终于找到了“罪魁祸首”！
+# 🚀 Sublink Worker 终极网页端定制分流指南
 
-你刚才反复测试依然被覆盖的原因，绝对不是你的配置语法（比如 DOMAIN-SUFFIX）有问题，而是 Sublink Worker 程序的底层硬编码逻辑导致的。
+如果你发现在 Sublink Worker 的“基础配置 (Base Config)”中填写的路由规则（rules）总是不生效、被强行覆盖，那是因为程序的**底层硬编码逻辑**拦截并删除了自定义规则。
 
-🔍 为什么基础配置里的 rules 永远不生效？
-强制屏蔽与删除：在 Sublink Worker 的源码 (BaseConfigBuilder.js) 中，当它读取到你粘贴的 Base Config 时，有一个名为 blacklistedKeys 的拦截机制，它会直接把 rules 和 rule-providers 这两项彻底删掉并无视。
+本指南提供了一套**“顺应底层逻辑”**的完美解决方案：**在 Base Config 中只保留节点与策略组，在 Custom Rules（自定义规则）中用 JSON 喂给它路由规则。**
 
-强制自动生成：它只允许通过它网页上的“规则集”或者“自定义规则”来生成路由。
+---
 
-强制注入兜底：如果在网页上你把所有基础规则（Rulesets）的勾全部取消，程序会触发一个 length === 0 的判断，认为你“忘记”选规则了，于是强行往你的配置里塞入一个名为 minimal（最小化）的默认规则集（包含 🔒 国内服务 和 🌐 非中国）。
+## 🛠️ 部署步骤
 
-这也就解释了为什么你在 Base Config 里写得再完美、网页上的勾取消得再干净，最后生成的配置依然会被系统“强暴”覆盖。
+### 第一步：修改基础配置 (Base Config)
+在 Sublink Worker 网页端，找到底部 **“基础配置 (Base Config)”**，格式选择 `Clash`。
+**将以下代码完整粘贴进去（注意：这里绝对不能包含 `rules:` 部分）：**
 
-🛠️ 终极网页端解决方案
-既然程序的机制是这样，我们就按照它设计的“正确姿势”来喂给它数据。
-我们需要分两步走：在 Base Config 中只保留节点与策略组，在 Custom Rules（自定义规则）中用 JSON 喂给它路由规则。
-
-第一步：修改你的基础配置 (Base Config)
-请把之前那一长串代码里的 rules: 部分完全删掉，只保留网络配置和分组。请直接复制以下精简后的代码粘贴到“基础配置”框中：
-
-YAML
+```yaml
 port: 7890
 socks-port: 7891
 allow-lan: false
@@ -30,27 +24,30 @@ dns:
   respect-rules: true
   enhanced-mode: fake-ip
   nameserver:
-    - https://120.53.53.53/dns-query
-    - https://223.5.5.5/dns-query
+    - [https://120.53.53.53/dns-query](https://120.53.53.53/dns-query)
+    - [https://223.5.5.5/dns-query](https://223.5.5.5/dns-query)
   proxy-server-nameserver:
-    - https://120.53.53.53/dns-query
-    - https://223.5.5.5/dns-query
+    - [https://120.53.53.53/dns-query](https://120.53.53.53/dns-query)
+    - [https://223.5.5.5/dns-query](https://223.5.5.5/dns-query)
 
 proxy-groups:
   - name: 🚀 节点选择
     type: select
     proxies: [♻️ 自动选择, ⚖️ 负载均衡, 🇭🇰 香港节点, 🇯🇵 日本节点, 🇺🇲 美国节点, 🇰🇷 韩国节点, 📥 下载节点, 🚀 手动切换, 🐢 慢速节点, DIRECT]
+  
   - name: ♻️ 自动选择
     type: url-test
-    url: http://cp.cloudflare.com/generate_204
+    url: [http://cp.cloudflare.com/generate_204](http://cp.cloudflare.com/generate_204)
     interval: 600
     tolerance: 50
     filter: '(?i)^(?!.*(jgw|Oracle|甲骨文|官网|剩余|到期|hk|港|hongkong)).*'
+  
   - name: ⚖️ 负载均衡
     type: fallback
-    url: http://cp.cloudflare.com/generate_204
+    url: [http://cp.cloudflare.com/generate_204](http://cp.cloudflare.com/generate_204)
     interval: 600
     filter: '(?i)^(?!.*(jgw|Oracle|甲骨文|hk|港|hongkong)).*'
+  
   - name: 💰 加密货币
     type: select
     proxies: [🇯🇵 日本节点, 🇺🇲 美国节点, 🚀 手动切换]
@@ -99,6 +96,8 @@ proxy-groups:
   - name: 🐟 漏网之鱼
     type: select
     proxies: [⚖️ 负载均衡, ♻️ 自动选择, 🇺🇲 美国节点, 🇯🇵 日本节点, 🇰🇷 韩国节点]
+  
+  # --- 正则筛选节点 ---
   - name: 📥 下载节点
     type: select
     include-all: true
@@ -127,11 +126,13 @@ proxy-groups:
     type: select
     include-all: true
     filter: '.*'
-第二步：配置 Custom Rules (自定义规则)
-网页上找到 【自定义规则 (Custom Rules)】 这个区域，切换到 JSON 视图。
-我把你所有精心挑选的“拦截、网盘、成人、电报”规则，全部转化为了 Sublink Worker 识别的 JSON 代码。请把下面这串 JSON 完整地粘贴进去：
 
-JSON
+
+###第二步：配置 Custom Rules (自定义规则)
+在网页上找到 【自定义规则 (Custom Rules)】 区域，切换到** JSON **视图。
+**这套 JSON 包含了满血补全的“拦截、网盘、成人、电报”规则，会直接转换为高性能的 RULE-SET。请完整粘贴进去：**
+
+```JSON
 [
   {
     "name": "🚫 广告拦截",
@@ -186,13 +187,14 @@ JSON
     "ip": "cn"
   }
 ]
-第三步：如何勾选生成
-填好你的原始节点链接。
 
-【关键】 在“基础规则 (Rulesets)”区域，随便打勾保留一个规则（比如就只保留“🔒 国内服务”），千万不要全部取消！这样它才不会触发那个把规则全部覆盖掉的“最小化防御机制”。
 
-因为我们在自定义 JSON 里设置了很高的优先级，它会自动跑到你的配置文件最前面拦截流量，所以它底部附带的那一点系统规则完全不会影响你，你可以当它们不存在。
+###第三步：网页端防覆盖生成技巧
+在顶部输入框填好你的原始节点链接。
 
-点击“生成订阅”。
+【防覆盖关键】：在“基础规则 (Rulesets)”复选框区域，请至少随便打勾保留一个规则（比如只勾选“🔒 国内服务”）。千万不要全部取消勾选！ 否则系统会触发“最小化防御机制”，强行抹除我们刚写的 JSON 规则。
 
-快去试试这套顺应它底层机制的最终解法！成功生成后，你就可以得到一个完美的永久在线更新链接了！
+（不用担心底部附带的系统规则，因为我们在 JSON 里设置了很高的优先级，它会自动跑到配置文件的最前面拦截流量，底部的规则纯属摆设不影响）。
+
+点击 “生成订阅”，享受完美的节点与规则分流吧！
+
